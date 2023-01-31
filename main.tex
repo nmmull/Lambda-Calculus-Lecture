@@ -1,0 +1,663 @@
+\documentclass[10pt]{beamer}
+\usepackage{nmmbeamer}
+
+\begin{document}
+
+\begin{frame}{About Me}
+My name is Nathan (he/him). Outside of teaching, I'm interested generally in type theory, logic, and computation.
+\nxt
+
+I'm primarily interested in teaching fundamentals courses, theory courses and PL courses, but I am also interested in getting more experience by teaching courses outside of my field. I also hope to be able to teach some advanced courses for undergraduates interested in logic.
+\nxt
+
+I'd like to stay connected to the research community (this is, of course, why I find NE such an exciting opportunity) and ideally use teaching as a tool to further my own research and create spaces for new young researchers.
+\nxt
+
+Above all, I'm interested in becoming a part of a community. I'd like to participate in all that I can to help strengthen the department with regards to representation and accessibility.
+\end{frame}
+
+\begin{frame}{About this Lecture}
+
+This is a rough draft of a lecture for a course I'd like to design on the $\lambda$-calculus and type theory.
+I want the course fall somewhere between theoretical and practical, with some work on dependent type theory and proof engineering, but also on the meta-theory no one seems to be covering in depth anymore.
+\nxt
+
+It's based heavily on \textit{Type Theory and Formal Proof} by Rob Nederpelt and Herman Geuvers, as well as \textit{CSMC 22500: Type Theory}, a course taught by Stuart Kurtz at UChicago.
+\nxt
+
+I expect students to be upper-class CS undergraduates with some experience in math, or math undergraduates with some experience in CS, but I could imagine it being useful even as a review for graduate students in logic who had to learn the $\lambda$-calculus on their own (like so many of us).
+\end{frame}
+
+\begin{frame}
+
+\mktitle{Lecture 2: An Introduction to the Lambda Calculus}
+
+CS@@@@: Type Theory
+
+January 30, 2023
+
+\mkfooter{Northeastern Demo Lecture}
+
+\end{frame}
+
+\begin{frame}{Objectives}
+\begin{itemize}
+\item Motivate the lambda calculus.
+\begin{itemize}
+\item What is a function, really?
+\item The lambda calculus may be more familiar than you think.
+\end{itemize}
+\pause
+\item Define the lambda calculus.
+\begin{itemize}
+\item Define $\lambda$-terms.
+\item Define notion of computing/reducing $\lambda$-terms.
+\end{itemize}
+\pause
+\item Try to understand as best we can the subtleties of these definitions.
+\begin{itemize}
+\item Figure out what the heck is going on with substitution and bound variables.
+\end{itemize}
+\pause
+\item Begin to understand the connection between the lambda calculus and computation.
+\pause
+\item Get as much practice as we can with all these notions.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Keywords}
+\begin{itemize}
+\item $\lambda$-Terms
+\item $\alpha$-Equivalence and Renaming
+\item Variables and Substitution
+\item $\beta$-Reduction
+\item Compatibility, Reduction Paths, and Equivalences
+\item Normal Forms
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What is a lambda? (A bit of history)}
+
+\begin{itemize}
+\item[1932] Alonzo Church defines a system for formalizing mathematics which has the $\lambda$-calculus implicitly at its core.
+\pause
+\item[1935] Stephen Cole Kleene and J. Barkley Rosser demonstrate that this system is inconsistent, so it can't be used as a foundation for mathematics.
+\pause
+\item[1936] Church distills his system to its \textc{functional} part, which becomes the $\lambda$-calculus. The `$\lambda$' is used to denote abstraction, i.e., the conversion of an expression with abstract variables into a function on one of it's variables.
+\pause
+\item[****] (A lot happens...)
+\pause
+\item[2006] Felice Cardone and J. Roger Hindley claim that the `$\lambda$' was chosen based on type setting.
+\pause
+\item[2016] Dana Scott claims that the choice was arbitrary.
+\pause
+\item[2022] Henk Barendregt claims Church developed the $\lambda$-calculus to show that a question his doctoral advisor asked him to solve was impossible.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{What is a calculus?}
+
+What we usually think of as calculus is misnomer, it was originally called the \textit{infinitesimal/integral/differential calculus}.
+\nxt
+
+\begin{definition}[Calculus, Informally]
+A \textbf{calculus} is a system for performing calculations. It's the rule which govern how certain things behave.
+\end{definition}
+\nxt
+
+\textbf{The $\lambda$-calculus is a set of rules which governs how functions behave and how their values are calculated.}
+
+\end{frame}
+
+\begin{frame}{But wait, what is a function?}
+
+Seems obvious right? A mathematician might say...
+
+\begin{definition}[Function as a Graph]
+A \textbf{function} $f$ from the set $X$ to the set $Y$ is a set of pairs $\{(x, y) : x \in X, y \in Y\}$ such that for all $x \in X$ there is a unique $y$ such that $(x, y) \in f$.
+\end{definition}
+\nxt
+
+But this feels unsatisfying for a programmer, where a function is really a procedure or description, e.g., `take $x$ and add $1$ to it'.
+\nxt
+
+\textit{Question.} What about the identity function `take $x$ and return it'? What does that look like as a set function?
+\nxt
+
+\textbf{The $\lambda$-calculus is a set of rules which governs how functions \textc{presented as rules or procedures} behave and how their values are calculated.}
+
+\end{frame}
+
+\begin{frame}[fragile]{The $\lambda$-Calculus (A First Approximation)}
+
+\textit{An observation.} The $\lambda$-calculus can be thought of as the fragment of your favorite programming language with only \textc{variables} and \textc{anonymous functions}. It's not an accident that anonymous functions in \texttt{Python} and \texttt{Racket} are called \texttt{lambda}s.
+\nxt
+
+In \texttt{Python}:
+
+\begin{minted}[bgcolor=mintedBg,linenos=true]{python}
+lambda x : x
+lambda x : (lambda y : x)
+lambda f : (lambda g : (lambda x : f(g(x))))
+lambda x : x(x)
+\end{minted}
+\nxt
+
+\begin{important}
+Everything in the lambda calculus is a function!
+\end{important}
+\end{frame}
+
+\begin{frame}{$\lambda$-Terms}
+
+\begin{definition}[$\lambda$-terms]
+Fix a countable collection of variables $V = \{v_1, v_2, \dots\}$.
+The set $\Lambda$ is define inductively as follows.
+\begin{itemize}
+\item \textc{$V \subset \Lambda$} \textit{(all \textbf{variables} are $\lambda$-terms)}.
+\item If \textc{$v_i \in V$} and \textc{$M \in \Lambda$}, then \textc{$(\lambda v_i . M) \in \Lambda$} \textit{(any terms can be \textbf{abstracted})}.
+\item If \textc{$M \in \Lambda$} and \textc{$N \in \Lambda$}, then \textc{$(MN) \in \Lambda$} \textit{(any term can be \textbf{applied} to any other term)}.
+\end{itemize}
+\end{definition}
+\nxt
+
+This definition is \textbf{inductive}, which means this is the \textbf{only} way to create $\lambda$-terms.
+\nxt
+
+Abstraction takes an expression with a variable and turns it into a function on that variable. \textc{(Think higher order functions!)}
+\begin{displaymath}
+\text{`$x$ with a hat'} \Longrightarrow \text{the function which puts a hat on its argument}
+\end{displaymath}
+\end{frame}
+
+\begin{frame}{Examples of $\lambda$-Terms}
+
+\begin{align*}
+&(\lambda v_1 . v_1) &\qquad \text{(identity)}\\
+&(\lambda v_1 . (\lambda v_2 . v_1)) &\qquad \text{(K)}\\
+&(\lambda v_1 . (\lambda v_2 . (\lambda v_3 . (v_1 (v_2 v_3))))) &\qquad \text{(composition)}\\
+&(\lambda v_1 . (v_1v_1)) &\qquad \text{($\Delta$)}
+\end{align*}
+\nxt
+
+\begin{important}
+These are syntactic objects! They don't mean anything until we've given them meaning. In particular, the parentheses are part of the syntax.
+\end{important}
+\end{frame}
+
+\begin{frame}{Meta-Syntactic Conventions}
+
+\begin{itemize}
+\item \textc{Application associates to the left} (just like most programming languages), e.g., \textc{$MNP$} is short for \textc{$(MN)P$}.
+
+\item We'll use \textc{any variable name} we want (within reason), e.g., \textc{$(\lambda x . x)$}.
+
+\item We'll \textc{drop parentheses} when there is no ambiguity, e.g., \textc{$\lambda x . \lambda y . x$}.
+
+\item We'll write \textc{multiple arguments} together, e.g., \textc{$\lambda x y. x$} is short for \textc{$\lambda x . \lambda y . x$}.
+\end{itemize}
+
+\begin{align*}
+&\lambda x . x &\qquad \text{(identity)} \\
+&\lambda x y . x &\qquad \text{(K)}\\
+&\lambda f g x . f (g x) &\qquad \text{(composition)} \\
+&\lambda x . x x &\qquad \text{($\Delta$)}
+\end{align*}
+\end{frame}
+
+
+%\begin{frame}{$\lambda$-Terms as Trees}
+%
+%\vfill
+%\centering
+%(Let's draw one!)\footnote{See handwritten notes for an example.}
+%\vfill
+%\end{frame}
+%
+%\begin{frame}[fragile]{$\lambda$-Terms in \texttt{OCaml}}
+%
+%\begin{minted}[bgcolor=mintedBg,linenos=true]{ocaml}
+%type term =
+%  | Var of string (* variables *)
+%  | Lam of string * term (* abstraction *)
+%  | App of term * term (* application *)
+%
+%let i = Lam ("x", Var "x")
+%let k = Lam ("x", Lam ("y", Var "x"))
+%let b = Lam ("f",
+%          Lam ("g",
+%            Lam ("x",
+%              App (Var "f",
+%                App (Var "g", Var "x")))))
+%let d = Lam ("z", App (Var "z", Var "z"))
+%\end{minted}
+%\vfill
+%\end{frame}
+
+\begin{frame}{Practice Problems}
+
+\begin{enumerate}
+\item Is $xxxxxxx$ a valid term?
+\item Is $\lambda x . x$ the same term as $\lambda y . y$? (this is a trick question!)
+\item Write down the term $\lambda xyz . x(yx)z$ without our meta-syntactic conventions.
+\item Describe the function that term $\lambda x f . f x$ represents in your favorite human-spoken language.
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}{So far...}
+
+We've seen the syntax of the $\lambda$-calculus. We've hinted a connection between $\lambda$-terms and programs. So: \textbf{how do we run them?}
+\nxt
+
+\textit{The idea.}
+\textbf{Reduction as computation.} For the $\lambda$-calculus, this means \textit{applying} our functions, but this concept comes up in general reduction systems.
+\nxt
+
+\begin{example}[Computing algebraic expressions]
+\vspace{-.5cm}
+\begin{align*}
+(2 * 3) + ((4 * 5) - 8) &\longrightarrow
+6 + ((4 * 5) - 8) \\ &\longrightarrow
+6 + (20 - 8) \\ &\longrightarrow
+6 + 12 \\ &\longrightarrow
+18
+\end{align*}
+\end{example}
+
+\end{frame}
+
+
+%\begin{frame}{An Aside: Syntax and Semantics}
+%
+%\textbf{Syntax} refers to the stuff we write down (think a program).
+%\nxt
+%
+%\textbf{Semantics} refers to the meaning of the things we write down (think the behavior of a program, or the function that the program implements).
+%\nxt
+%
+%\begin{important}
+%There may be many syntactically distinct objects which are semantically equivalent (think programs that do the same thing). This is what makes programming so interesting!
+%\end{important}
+%
+%\end{frame}
+%
+%\begin{frame}{Operational Semantics vs. Denotational Semantics}
+%
+%\textbf{Operational Semantics} describe how to \textit{run} a syntactic object (i.e., a program).
+%It views the meaning of a program as a sequence of computations or reductions, or sometimes as the value at the end of the sequences of computations.
+%\nxt
+%
+%\textbf{Denotational Semantics} views the meaning of a program as an object in a mathematical structure (e.g., a kind of function on sets, an arrow in a category, a continuous function on some topology).
+%We build mathematical models of computation and then \textit{interpret} our programs in those models.
+%\end{frame}
+
+\begin{frame}{$\beta$-Reduction}
+
+\textit{The idea.} Applying a function to a term should result in the \textc{expression in the body} of the function \textc{with the variable substituted} at its argument.
+\nxt
+
+\begin{align*}
+(\lambda x . \text{`$x$ with a hat'})\mathsf{cat} &\longrightarrow_\beta
+\text{`$\mathsf{cat}$ with a hat'} \\
+\pause
+(\lambda x . M) N &\longrightarrow_\beta \sub M N x
+\end{align*}
+
+where $\sub M N x$ is the result of \textc{substituting} $N$ for $x$ in $M$. Furthermore, we should be able to do this \textc{anywhere in the term}.
+\nxt
+
+\begin{example}
+\vspace{-.75cm}
+\begin{align*}
+(((\lambda fgx . f(gx))M)N)P
+&\onestepbeta ((\lambda gx . M(gx))N)P \\
+&\onestepbeta (\lambda x . M(Nx))P \\
+&\onestepbeta M (N P)
+\end{align*}
+\end{example}
+\end{frame}
+
+\begin{frame}{Substitution}
+
+\begin{definition}[Substitution, Informally]
+The \textbf{substitution of $x$ by $N$ in $M$}, written $\sub M N x$, is the result of replacing all instances of $x$ in $M$ by $N$.
+\end{definition}
+\vfill
+
+\begin{example}
+\begin{displaymath}
+\sub{(\lambda z . x (\textcolor{red}{y} z)\textcolor{red}{y})}{\lambda q . q}{\textcolor{red}{y}} = \lambda z . x (\textcolor{red}{(\lambda q . q)} z)\textcolor{red}{(\lambda q . q)})
+\end{displaymath}
+\end{example}
+\nxt
+
+\textit{First Problem.} What about $\sub {(\lambda y . y)}{\lambda q . q}{y}$?
+\smallskip\pause
+
+\textit{Second Problem.} What about $\sub{(\lambda y. z)}{y}{z}]$?
+
+\end{frame}
+
+\begin{frame}{Variable Scope}
+
+\begin{definition}[Free and Bound Variables]
+The set $\mathsf{FV}(M)$ of \textbf{free variables} in $M$ is defined inductively as follows.
+\begin{align*}
+\mathsf{FV}(x) &\df \{x\} \\
+\mathsf{FV}(\lambda x . M) &\df \mathsf{FV}(M) - \{x\} \\
+\mathsf{FV}(MN) &\df \mathsf{FV(M)} \cup \mathsf{FV(N)}
+\end{align*}
+We can define \textbf{bound variables} $\mathsf{BV}(M)$ in a similar way.
+\end{definition}
+\nxt
+
+\textit{Question.} What are the free variables of $x(\lambda x. x y$)?
+\nxt
+
+\textbf{The Barendregt Convention.} We will write bound variables so that they are distinct from each other and any free variable.
+
+\end{frame}
+
+\begin{frame}{Substitution, Actually}
+
+\begin{definition}[Renaming and Capture-Avoiding Substitution]
+The \textbf{renaming of $y$ to $z$ in $M$}, written $M^{y \to z}$, is the term that results from replacing all free occurrences of $y$ with the variable $z$ in $M$.
+The \textbf{substitution of $x$ by $N$ in $M$}, written $\sub M N x$, is defined inductively as follows.
+\begin{align*}
+\sub y N x &\df
+\begin{cases}
+  N & y = x \\
+  y & \ow
+\end{cases} \\
+\sub{(\lambda y . M)} N x &\df
+\begin{cases}
+\lambda y . M & x = y \\
+\lambda y . \sub M N x & y \not \in \mathsf{FV}(N) \\
+\lambda z . \sub {M^{y \to z}} N x & \text{o.w.} \ (z \not \in \mathsf{FV}(N) \cup \mathsf{FV}(M) \cup \mathsf{BV}(M)) \\
+\end{cases} \\
+\sub{(PQ)}{N}{x} &\df \sub P N x\sub Q N x
+\end{align*}
+\end{definition}
+
+The condition that $z \not \in \mathsf{FV}(N) \cup \mathsf{FV}(M)$ ensures that free variables are not \textc{captured} by the bound variable $z$.
+\end{frame}
+
+\begin{frame}[fragile]{Practice Problems}
+\begin{enumerate}
+  \item Write down formal inductive definitions for bound variables and for the variable renaming operation.
+  \item In the definition of substitution, why do we require that the renamed variable does not appear in $\mathsf{BV}(M)$? Try to come up with an example.
+  \item Where is the definition of substitution underspecified? What can be done to make it more specific?
+  \item Give the result of the following substitutions.\footnote{This is based on Problem 1.5 from TTFP.}
+    \begin{itemize}
+      \item $\sub{(\lambda x . y (\lambda y . x y))}{\lambda z . zx}{y}$
+      \item $\sub{(\lambda y . y y x)}{yz}{x}$
+    \end{itemize}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{So far... (part 2)}
+We've defined $\lambda$-terms and we've given a rough sketch of $\beta$-reduction as a form of computation for the  $\lambda$-calculus:
+\vfill
+
+\begin{quote}
+\begin{align*}
+(\lambda x . M) N \longrightarrow_\beta \sub M N x
+\end{align*}
+
+where $\sub M N x$ is the result of substituting $N$ for $x$ in $M$. Furthermore, we should be able to do this \textcolor{red}{anywhere in the term}.
+\end{quote}
+\nxt
+
+
+\textit{Question.} How do we handle the ``anywhere in the term" part of the definition of $\beta$-reduction? And what about computations with more than one step?
+
+\end{frame}
+
+\begin{frame}{Notions of Reductions}
+
+We've seen:
+\begin{align*}
+\lambda x . M &\longrightarrow_\alpha \lambda z . M^{x \to z} \quad (z \not \in \mathsf{FV}(M) \cup \mathsf{BV}(M)) \\
+(\lambda x . M) N &\longrightarrow_\beta \sub M N x
+\end{align*}
+\pause
+
+\begin{definition}[Notion of Reduction]
+A \textbf{notion of reduction} is a binary relation on $\lambda$-terms. For example,
+\begin{displaymath}
+\beta = \{( \ (\lambda x . M) N \ , \ \sub M N x \ ) : M, N \in \Lambda, x \in V\}.
+\end{displaymath}
+\end{definition}
+\nxt
+
+\textit{Question.} Can we lift this to a relation on all terms?
+\end{frame}
+
+\begin{frame}{Redexes and Compatibility}
+
+\textit{One way.}
+The \textbf{compatibility closure} of a notion of reduction $R$, written $\rightarrow_R$, is the smallest relation satisfying the following closure properties.
+\begin{itemize}
+\item $M \rightarrow_R M'$ implies $\lambda x . M \rightarrow_R \lambda x . M'$
+\item $M \rightarrow_R M'$ implies $MN \rightarrow_R M'N$
+\item $N \rightarrow_R N'$ implies $MN \rightarrow_R MN'$
+\end{itemize}
+\nxt
+
+\textit{Another way.}
+The set of \textbf{subterms} $\mathsf{sub}(M)$ of a term $M$ is defined formally as follows.
+\vspace{-.25cm}
+\begin{align*}
+\mathsf{sub}(x) &\df \{x\} \\
+\mathsf{sub}(\lambda x . M) &\df \mathsf{sub}(M) \cup \{\lambda x . M\} \\
+\mathsf{sub}(MN) &\df \mathsf{sub}(M) \cup \mathsf{sub}(N) \cup \{MN\}
+\end{align*}
+
+An \textbf{$R$-redex} of a term $M$ is a subterm $N$ of $M$ such that there is a term $N'$ with $(N, N') \in R$. Then
+\[
+(\dots N \dots) \to_R (\dots N' \dots)
+\]
+
+\end{frame}
+
+\begin{frame}{Some Examples of Reductions}
+
+\begin{lemma}
+These two definition of $\to_R$ are equivalent.
+\end{lemma}
+\nxt
+
+\begin{example}
+\begin{itemize}
+\item The redexes in the following term are underlined
+\begin{displaymath}
+v(\underline{(\lambda x . \underline{(\lambda y . yx)z}) v})
+\end{displaymath}
+\item $v((\lambda x . \underline{(\lambda y . yx)z}) v) \onestepbeta v((\lambda x . zx) v)$
+\item $v(\underline{(\lambda x . (\lambda y . yx)z) v}) \onestepbeta v((\lambda y . zv)z)$
+\end{itemize}
+\end{example}
+\nxt
+
+\textit{Question.} And what about more than one computation step?
+\end{frame}
+
+\begin{frame}{Reduction Paths}
+
+\textit{One way.}
+The \textbf{reflexive transitive closure} of a notion of reduction $R$, written $\twoheadrightarrow_R$, is the smallest relation satisfying
+\begin{itemize}
+\item $M \to_R N$ implies $M \twoheadrightarrow_R N$ (closure)
+\item $M \twoheadrightarrow_R M$ (reflexivity)
+\item $M \twoheadrightarrow_R N$ and $N \twoheadrightarrow_R P$ implies $M \twoheadrightarrow_R P$ (transitivity)
+\end{itemize}
+\nxt
+
+\textit{Another way.}
+An \textbf{$R$-path} for a notion of reduction $R$ starting at $M$ is a sequences of terms $M_1, \dots, M_k$ such that
+\begin{displaymath}
+M = M_1 \to_R M_2 \to_R \dots \to_R M_k
+\end{displaymath}
+(Note that this definition also works for infinite sequences)
+\vfill
+
+We write $M \multistepbeta N$ if there is an (possibly empty) $R$-path starting at $M$ and ending at $N$.
+We call $N$ a \textbf{reduct} of $M$.
+\end{frame}
+
+\begin{frame}{Examples of Reduction Paths}
+
+\begin{lemma}
+These two definitions of $\twoheadrightarrow_R$ are equivalent.
+\end{lemma}
+\nxt
+
+\begin{example}
+\begin{itemize}
+\item $(\lambda f g x. f (g x)) a b c \multistepbeta a(b c)$
+\item $v((\lambda x . (\lambda y . yx)z) v) \multistepbeta v(zv)$
+\item $(\lambda x . xx) (\lambda x . xx) \multistepbeta (\lambda x . xx) (\lambda x . xx)$
+\end{itemize}
+\end{example}
+
+\end{frame}
+
+\begin{frame}{Equivalences}
+
+\textit{One way.}
+For a notion of reduction $R$ the \textbf{equivalence closure}, written $=_R$ is the smallest relation satisfying
+\begin{itemize}
+\item $M \twoheadrightarrow_R N$ implies $M =_R N$
+\item $M =_R M$
+\item $M =_R N$ implies $N =_R M$
+\item $M =_R N$ and $N =_R P$ implies $M =_R P$.
+\end{itemize}
+\nxt
+
+\textit{Another way.}
+We write $M =_R N$ if there is a term $P$ such that $M \twoheadrightarrow_R P$ and $N \twoheadrightarrow_R P$. This naturally captures the idea of \textc{computing two terms to see if they are the same}.
+\nxt
+
+\begin{theorem}
+These two definitions are equivalent \textc{for $\alpha$, $\beta$, and $\gamma$}.
+\end{theorem}
+\end{frame}
+
+\begin{frame}{$\beta$-Equivalence}
+
+\begin{important}
+$\beta$-Equivalence gives us a notion of semantic equivalence for  $\lambda$-terms.
+\end{important}
+\nxt
+
+Per the previous slides, one simple way to tell if two terms are $\beta$ equivalent is to \textc{show that they share a reduct}.
+\nxt
+
+\begin{example}
+Even though neither reduces to the other
+\begin{displaymath}
+(\lambda x. g x)u \eqbeta (\lambda y . yu) g
+\end{displaymath}
+since they both reduce to $gu$.
+\end{example}
+
+\end{frame}
+
+\begin{frame}{$\alpha$-Equivalence}
+
+\textit{An Observation.} Self-substitution may not preserve syntactic equivalence, e.g.,
+\begin{displaymath}
+\sub {(\lambda y. y)} y y = \lambda z . z
+\end{displaymath}
+for some variable $z$.
+\nxt
+
+\begin{important}[Barendregt Convention Revisited]
+We consider syntactic equivalence ($\equiv$) up to $\alpha$-Equivalence, and use distinct bound variables when writing down $\lambda$-terms to emphasize this.
+\end{important}
+\nxt
+
+Said another way, when we write $M =_R N$, we really mean $M =_{R\alpha} N$, where we think of $R\alpha$ as the notion of reduction $R \cup \alpha$.
+\nxt
+
+\textit{Example.} We can use the symbol $\mathsf{I} \equiv \lambda x . x$ without worrying about which variable we used. Furthermore, we can write things like $\mathsf{I}\mathsf{I} =_\beta \mathsf{I}$
+
+\end{frame}
+
+
+\begin{frame}{Normal Forms}
+\begin{definition}
+An \textbf{$R$-normal form} is a term $N$ such that $N$ has no $R$-redexes.
+A term $M$ is \textbf{$R$-normalizing} if there is an $R$-normal form $N$ such that $M \twoheadrightarrow_R N$.
+\end{definition}
+\nxt
+
+\begin{example}
+\begin{itemize}
+\item $x$, $xy$, $\lambda x . x$, $\lambda xy . x$ are $\beta$ normal forms.
+\item $(\lambda x . x)(\lambda y . y)$ is not a $\beta$ normal form.
+\item $v((\lambda x . (\lambda y . yx)z) v)$ is $\beta$-normalizing.
+\item $\Omega \equiv (\lambda x . xx)(\lambda x . xx)$ is not $\beta$-normalizing.
+\end{itemize}
+\end{example}
+\nxt
+
+\begin{lemma}
+If $M =_\beta N$ and $N$ is a normal form, then $M \twoheadrightarrow_\beta N$.
+\end{lemma}
+\nxt
+
+So our notion semantic equivalence and the value of a computation are compatible.
+\end{frame}
+
+\begin{frame}{Practice Problems}
+
+\begin{enumerate}
+\item Write down the subterms and the redexes of $((\lambda x y. y x) z)((\lambda z . z) w)$.
+\item Find two terms $M$ and $N$ such that $M \onestepbeta N$ and $N$ has more redexes than $M$.
+\item Let $S \equiv \lambda x y z . xz (yz)$ and $K \equiv \lambda x y . x$. Show that $SKK \multistepbeta I$.
+\item Find a term $M$ with is $\beta$-normalizing, but there is an infinite $R$-path starting at $M$.
+\item Are there $\alpha$ normal forms?
+
+\end{enumerate}
+
+\end{frame}
+
+\begin{frame}{Final Recap}
+\begin{itemize}
+\item We've defined $\lambda$-terms, in a couple ways. These are the syntactic basis for the lambda calculus.
+\item We've discussed notions of reduction, particularly $\beta$-reduction as way to think about the operational semantics of the lambda calculus.
+\item We've seen how tricky getting these notions exactly right can be.
+\item We've looked at normal forms as a notion of the value of a computation of a $\lambda$-term.
+\item We've gotten some practice looking at how reductions behave.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Looking Forward}
+\begin{itemize}
+\item Are $\beta$-normal forms the ``return values" of a computation? If so, $\beta$-normal forms should probably be unique. (hint. Church-Rosser Theorem)
+\item So we've figured out substitution. Is there really no better option? (hint. De Bruijn indices)
+\item We've said the $\lambda$-calculus is used for computation. But how much can we actually do? (hint. Church Encodings and the Fixed-Point theorem)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{A Challenge Problem}
+\begin{definition}[Reduction Graphs]
+The $\beta$-reduction graph of a term $M$ is a directed graph on the set $\{N : M \multistepbeta N\}$ with edges generated by $\to_\beta$.
+\end{definition}
+\vfill
+
+\begin{enumerate}
+\item Draw the reduction graphs for $\Omega$, $KI\Omega$, and $v((\lambda x . (\lambda y . yx)z) v)$.
+\item Write a term whose reduction graph is the directed 3-cyclic graph.
+\end{enumerate}
+\vfill
+
+(This may be easier with a picture)\footnote{See handwritten notes for more details.}
+
+
+
+\end{frame}
+
+\end{document}

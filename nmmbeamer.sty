@@ -1,0 +1,192 @@
+%
+%
+%   ||\\    ||\\    ||\\    ||\\    ||\\    Nathan M. Mull
+%  ||  \\  ||  \\  ||  \\  ||  \\  ||  \\   Copyright 2022
+% ||    \\||    \\||    \\||    \\||    \\  All rights reserved
+%
+%
+\NeedsTeXFormat{LaTeX2e}[1994/06/01]
+\ProvidesPackage{nmmbeamer}[2022/03/01 v0.01 LaTeX package for personal use]
+
+\usepackage{mathtools}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{thmtools, thm-restate}
+\usepackage{stmaryrd}
+
+% new theorems
+\newtheorem{important}{Important}
+\newtheorem{idea}{Idea}
+%\newtheorem{example}{Example}
+
+% useful commands
+\newcommand{\mktitle}[1]{
+  \centering
+  \vspace{0.35\paperheight}
+  {\Large \textcolor{BlueBlack}{\underline{\textit{#1}}}}
+  \vspace{0.25cm}
+}
+\newcommand{\mkfooter}[1]{
+  \centering
+  \vfill
+  {\tiny \textbf{#1}}
+}
+\newcommand{\textc}[1]{\textcolor{BlueBlack}{#1}}
+\newcommand{\nxt}{\pause\vfill}
+
+% fonts
+%\usefonttheme{serif}
+%\usepackage{palatino}
+
+% code for slides
+\usepackage{minted}
+
+% colors
+\definecolor{BlueBlack}{RGB}{0, 102, 204}
+\definecolor{Grey}{RGB}{224, 224, 224}
+\definecolor{DarkGrey}{RGB}{130, 130, 130}
+\definecolor{mintedBg}{rgb}{0.95,0.95,0.95}
+
+% beamers settings
+\beamertemplatenavigationsymbolsempty
+\setbeamertemplate{footline}[frame number]
+\setbeamercovered{transparent}
+\setbeamercolor{frametitle}{fg=BlueBlack, bg=Grey}
+\setbeamercolor{title}{fg=BlueBlack}
+\setbeamercolor{local structure}{fg=BlueBlack}
+\setbeamercolor{block title}{use=structure,fg=white,bg=DarkGrey}
+\setbeamercolor{block body}{parent=normal text,use=block title,bg=Grey}
+
+% Buss derivation trees
+\usepackage{bussproofs}
+
+% For images
+\usepackage{tikz}
+\usetikzlibrary{cd}
+
+%Specifying title and heading fonts
+% \usepackage{titlesec}
+% \usepackage{titling}
+% \usepackage{fontspec}
+% \newfontfamily\headingfont[]{League Spartan}
+% \renewcommand{\maketitlehooka}{\headingfont}
+% \pretitle{
+%     \begin{center}
+%         \Huge
+% }
+% \posttitle{
+%     \end{center}
+% }
+% \titleformat*{\section}{\LARGE\headingfont\filcenter}
+% \titleformat*{\subsection}{\Large\headingfont\filcenter}
+% \titleformat*{\subsubsection}{\large\headingfont\filcenter}
+% \setmainfont{Cardo}
+
+% sets
+\newcommand{\setcomp}[2]{\{#1 \ | \ #2\}}
+
+% basic mathematics
+\newcommand{\len}[1]{|#1|}
+\newcommand{\upto}[1]{[#1]}
+\newcommand{\dran}[2]{[#1\dots#2]}
+\newcommand{\seq}[1]{(#1)}
+\newcommand{\seqbnd}[4]{(#1)_{#2{=}#3}^{#4}}
+
+% general typography
+\newcommand{\df}{\triangleq}
+\newcommand{\term}[1]{\textbf{#1}}
+\newcommand{\ow}{\textnormal{otherwise}}
+\newcommand{\eg}{\textit{e.g.}}
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\etc}{\textit{etc.\ }}
+\newcommand{\etal}{\textit{et al.\ }}
+\newcommand{\etalp}{\textit{et al.}}
+\newcommand{\mand}{\textnormal{ and }}
+\newcommand{\cont}{\hspace{10mm}} % for continuing an equation onto another line
+
+% pure type systems
+\newcommand{\sorts}{\mathcal S}
+\newcommand{\axioms}{\mathcal A}
+\newcommand{\rules}{\mathcal R}
+\newcommand{\vars}{\mathsf{V}}
+\newcommand{\terms}{\mathsf{T}}
+\newcommand{\types}{\mathsf{Ty}}
+
+% terms, types, etc.
+\newcommand{\lambdaT}[4][]{\lambda^{#1} #2^{#3}. \ #4}
+\newcommand{\PiT}[4][]{{\Pi^{#1} {#2}^{#3}. \ {#4}}}
+\newcommand{\app}[3][]{{\mathsf{app}^{#1}({#2}, {#3})}}
+\newcommand{\freeVars}{\mathsf{FV}}
+\newcommand{\boundVars}{\mathsf{BV}}
+
+% projections
+\newcommand{\fst}{\mathsf{fst}}
+\newcommand{\snd}{\mathsf{snd}}
+
+% contexts
+\newcommand{\emptyContext}{\varnothing}
+
+% derivations
+\newcommand{\statement}[3][]{{{#2} :^{#1} {#3}}}
+\newcommand{\judgment}[4][]{#2 \vdash_{#1} \statement {#3} {#4}}
+\newcommand{\negjudgment}[3]{#1 \not \vdash \statement {#2} {#3}}
+\newcommand{\judgmentQ}[5][]{#2 \vdash_{#1} \statement[#4]{#3}{#5}}
+\newcommand{\sub}[3]{#1[#2/#3]}
+
+% commands for conversions
+\newcommand{\eqbeta}{=_\beta}
+\newcommand{\onestepbeta}{\rightarrow_\beta}
+\newcommand{\multistepbeta}{\twoheadrightarrow_\beta}
+\newcommand{\multistepbetaleft}{\twoheadleftarrow_\beta}
+
+% Type systems
+\newcommand{\lC}{\lambda C}
+\newcommand{\lom}{\lambda \omega}
+\newcommand{\lwo}{\lambda \underline{\omega}}
+\newcommand{\lar}{\lambda_\to}
+\newcommand{\lP}{\lambda P}
+\newcommand{\lU}{\lambda U}
+\newcommand{\lUm}{\lambda U^-}
+\newcommand{\lSt}{\lambda\star}
+\newcommand{\lS}{\lambda S}
+\newcommand{\lHOL}{\lambda \mathsf{HOL}}
+\newcommand{\lTwo}{\lambda 2}
+\newcommand{\ndr}[1]{{#1}^*}
+
+% MOVE THESE THINGS
+\newcommand{\mfE}{\mathfrak{E}}
+\newcommand{\mfA}{\mathfrak{A}}
+\newcommand{\real}{\mathsf{real}}
+\newcommand{\SN}{\mathsf{SN}}
+\newcommand{\AT}{\mathsf{AT}}
+
+% Translation paper
+\DeclareMathOperator{\rhoT}{\rho}
+\DeclareMathOperator{\tauT}{\tau}
+\DeclareMathOperator{\gammaT}{\gamma}
+\newcommand{\sqT}[1]{\llbracket #1 \rrbracket}
+\newcommand{\judgmentN}[3]{{#1}  \vdash_{\lambda S^*} \statement{#2}{#3}}
+\newcommand{\avar}[2]{{}^{#1}{#2}}
+\newcommand{\svar}[2]{\avar{s_{#1}}{#2}}
+\newcommand{\var}[2][]{{{}^{#1}{#2}}}
+\newcommand{\ecc}[1]{\mathsf{ECC}^{#1}}
+
+\newcommand{\dterms}[1]{\terms_{\geq #1}}
+\newcommand{\lneg}[1]{\neg^{#1}}
+\newcommand{\listT}{\mathsf{List}}
+
+% Grammars
+\newcommand{\bnfeq}{\Coloneqq}
+\newcommand{\sbar}{ \ | \ }
+
+% Three Tiered Systems
+\newcommand{\lVOne}{{\lambda V_1}}
+\newcommand{\lVTwo}{{\lambda V_2}}
+
+% references in file
+% this order is required by thmtools
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+% END OF FILE
+\endinput
